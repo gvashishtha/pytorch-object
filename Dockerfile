@@ -16,6 +16,7 @@ FROM mcr.microsoft.com/azureml/o16n-base/python-assets@sha256:20a8b655a3e5b9b0db
 # Label: com.nvidia.volumes.needed=nvidia_driver
 # Ubuntu 18.04
 FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
+ARG PYTHON_VERSION=3.8
 
 USER root:root
 
@@ -47,7 +48,7 @@ RUN apt-get update && \
     bzip2=1.0.6-8.1ubuntu0.2 \
     libbz2-1.0=1.0.6-8.1ubuntu0.2 \
     systemd \
-    git=1:2.17.1-1ubuntu0.4 \
+    git \
     wget \
     cpio \
     libsm6 \
@@ -72,12 +73,18 @@ EXPOSE 5001 8883 8888
 # Conda Environment
 ENV MINICONDA_VERSION 4.5.11
 ENV PATH /opt/miniconda/bin:$PATH
+  # These come from the PyTorch example: https://github.com/pytorch/pytorch/blob/master/docker/pytorch/Dockerfile
 RUN wget -qO /tmp/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh && \
-    bash /tmp/miniconda.sh -bf -p /opt/miniconda && \
+    bash /tmp/miniconda.sh -bf -p /opt/conda && \
     conda clean -ay && \
     rm -rf /opt/miniconda/pkgs && \
     rm /tmp/miniconda.sh && \
+    /opt/conda/bin/conda install -y python=$PYTHON_VERSION numpy pyyaml scipy ipython mkl mkl-include ninja cython typing && \
+    /opt/conda/bin/conda install -y -c pytorch magma-cuda100 'torchvision>=0.5.0' && \
+    /opt/conda/bin/conda clean -ya && \
     find / -type d -name __pycache__ | xargs rm -rf
+
+ENV PATH /opt/conda/bin:$PATH
 
 # Open-MPI installation
 ENV OPENMPI_VERSION 3.1.2
@@ -91,3 +98,6 @@ RUN mkdir /tmp/openmpi && \
     make install && \
     ldconfig && \
     rm -rf /tmp/openmpi
+
+# Install cocoapi, required for drawing bounding boxes
+RUN git clone https://github.com/cocodataset/cocoapi.git && cd cocoapi/PythonAPI && python setup.py build_ext install
