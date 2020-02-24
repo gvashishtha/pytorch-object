@@ -75,17 +75,17 @@ ENV MINICONDA_VERSION latest
 ENV PATH /opt/miniconda/bin:$PATH
   # These come from the PyTorch example: https://github.com/pytorch/pytorch/blob/master/docker/pytorch/Dockerfile
 RUN wget -qO /tmp/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh && \
-    bash /tmp/miniconda.sh -bf -p /opt/conda && \
-    /opt/conda/bin/conda clean -ay && \
-    rm -rf /opt/conda/pkgs && \
+    bash /tmp/miniconda.sh -bf -p /opt/miniconda && \
+    /opt/miniconda/bin/conda clean -ay && \
+    rm -rf /opt/miniconda/pkgs && \
     rm /tmp/miniconda.sh && \
-    /opt/conda/bin/conda install -y python=$PYTHON_VERSION && \
-    /opt/conda/bin/conda install -y cython numpy && \
-    /opt/conda/bin/conda install -y -c pytorch magma-cuda100 'torchvision>=0.5.0' && \
-    /opt/conda/bin/conda clean -ya && \
+    /opt/miniconda/bin/conda install -y python=$PYTHON_VERSION && \
+    /opt/miniconda/bin/conda install -y cython numpy && \
+    /opt/miniconda/bin/conda install -y -c pytorch magma-cuda100 'torchvision>=0.5.0' && \
+    /opt/miniconda/bin/conda clean -ya && \
     find / -type d -name __pycache__ | xargs rm -rf
 
-ENV PATH /opt/conda/bin:$PATH
+ENV PATH /opt/miniconda/bin:$PATH
 
 # Open-MPI installation
 ENV OPENMPI_VERSION 3.1.2
