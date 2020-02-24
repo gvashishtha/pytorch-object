@@ -1,12 +1,5 @@
-# bashCommand1 = "git clone https://github.com/cocodataset/cocoapi.git"
-# bashCommand2 = "python setup.py build_ext install"
-
-# import subprocess
-
-# process = subprocess.Popen(bashCommand1.split(), stdout=subprocess.PIPE)
-# output, error = process.communicate()
-# process = subprocess.Popen(bashCommand2.split(), stdout=subprocess.PIPE, cwd='cocoapi/PythonAPI')
-# output, error = process.communicate()
+import os
+os.system("git clone https://github.com/cocodataset/cocoapi.git && cd cocoapi/PythonAPI && python setup.py build_ext install")
 
 from engine import train_one_epoch, evaluate
 import utils

@@ -9,6 +9,7 @@ test.zip
 transforms.py
 utils.py
 vision/
+cocoapi/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
