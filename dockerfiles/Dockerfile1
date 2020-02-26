@@ -10,3 +10,5 @@ RUN /opt/miniconda/bin/conda install -y pytorch torchvision cudatoolkit=10.1 -c 
 
 # Install cocoapi, required for drawing bounding boxes
 RUN git clone https://github.com/cocodataset/cocoapi.git && cd cocoapi/PythonAPI && python setup.py build_ext install
+
+RUN pip install azureml-defaults
