@@ -1,6 +1,3 @@
-import os
-os.system("git clone https://github.com/cocodataset/cocoapi.git && cd cocoapi/PythonAPI && python setup.py build_ext install")
-
 from engine import train_one_epoch, evaluate
 import utils
 import transforms as T
