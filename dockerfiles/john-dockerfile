@@ -12,7 +12,7 @@ RUN apt-get update --fix-missing && apt-get install -y --no-install-recommends \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-ENV CONDA_ENV_FILE_NAME conda-env.yml
+ENV CONDA_ENV_FILE_NAME john-conda.yml
 ADD $CONDA_ENV_FILE_NAME /tmp/$CONDA_ENV_FILE_NAME
 ENV CONDA_DIR /opt/conda
 ENV CONDA_ENV_NAME fwi01_conda_env
