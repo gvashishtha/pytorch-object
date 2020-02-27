@@ -6,6 +6,7 @@ name: fwi01_conda_env01
 channels:
   - anaconda
   - conda-forge
+  - pytorch
 dependencies:
   - python=3.6 # 3.6 req by tf, not 3.7.2 
   - dask
@@ -17,7 +18,7 @@ dependencies:
   - numpy 
   - pandas
   - pip
-  - pycocotools=0.2.0
+  - pycocotools=2.0.0
   - torchvision=0.5.0
   - pytorch=1.4
   - pytables
