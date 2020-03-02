@@ -1,87 +1,18 @@
-from engine import train_one_epoch, evaluate
-import utils
-import transforms as T
-
+import argparse
+import os
+import torch
 import torchvision
+import transforms as T
+import utils
+
+from azureml.core import Dataset, Run
+from data import PennFudanDataset
+from engine import train_one_epoch, evaluate
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
-from azureml.core import Dataset, Run
-import argparse
-import os
-import numpy as np
-import torch
-import torch.utils.data
-from PIL import Image
+NUM_CLASSES = 2
 
-
-class PennFudanDataset(torch.utils.data.Dataset):
-    def __init__(self, dataset, transforms=None):
-        self.dataset = dataset
-        self.transforms = transforms
-        # load all image files, sorting them to
-        # ensure that they are aligned
-        with self.dataset.mount() as mount_context:
-            self.imgs = list(sorted(os.listdir(os.path.join(mount_context.mount_point, "PNGImages"))))
-            self.masks = list(sorted(os.listdir(os.path.join(mount_context.mount_point, "PedMasks"))))
-
-    def __getitem__(self, idx):
-        # load images ad masks
-        with self.dataset.mount() as mount_context:
-            img_path = os.path.join(mount_context.mount_point, "PNGImages", self.imgs[idx])
-            mask_path = os.path.join(mount_context.mount_point, "PedMasks", self.masks[idx])
-            img = Image.open(img_path).convert("RGB")
-            # note that we haven't converted the mask to RGB,
-            # because each color corresponds to a different instance
-            # with 0 being background
-            mask = Image.open(mask_path)
-
-            mask = np.array(mask)
-            # instances are encoded as different colors
-            obj_ids = np.unique(mask)
-            # first id is the background, so remove it
-            obj_ids = obj_ids[1:]
-
-            # split the color-encoded mask into a set
-            # of binary masks
-            masks = mask == obj_ids[:, None, None]
-
-            # get bounding box coordinates for each mask
-            num_objs = len(obj_ids)
-            boxes = []
-            for i in range(num_objs):
-                pos = np.where(masks[i])
-                xmin = np.min(pos[1])
-                xmax = np.max(pos[1])
-                ymin = np.min(pos[0])
-                ymax = np.max(pos[0])
-                boxes.append([xmin, ymin, xmax, ymax])
-
-            boxes = torch.as_tensor(boxes, dtype=torch.float32)
-            # there is only one class
-            labels = torch.ones((num_objs,), dtype=torch.int64)
-            masks = torch.as_tensor(masks, dtype=torch.uint8)
-
-            image_id = torch.tensor([idx])
-            area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
-            # suppose all instances are not crowd
-            iscrowd = torch.zeros((num_objs,), dtype=torch.int64)
-
-            target = {}
-            target["boxes"] = boxes
-            target["labels"] = labels
-            target["masks"] = masks
-            target["image_id"] = image_id
-            target["area"] = area
-            target["iscrowd"] = iscrowd
-
-            if self.transforms is not None:
-                img, target = self.transforms(img, target)
-
-        return img, target
-
-    def __len__(self):
-        return len(self.imgs)
 
 def get_instance_segmentation_model(num_classes):
     # load an instance segmentation model pre-trained on COCO
@@ -102,6 +33,7 @@ def get_instance_segmentation_model(num_classes):
 
     return model
 
+
 def get_transform(train):
     transforms = []
     # converts the image, a PIL image, into a PyTorch Tensor
@@ -112,13 +44,15 @@ def get_transform(train):
         transforms.append(T.RandomHorizontalFlip(0.5))
     return T.Compose(transforms)
 
+
 def main():
     print("Torch version:", torch.__version__)
     # get command-line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_name', type=str, default="penn_ds",
                         help='name of dataset for training and test')
-    parser.add_argument('--output_dir', default="./outputs", type=str, help='output directory')
+    parser.add_argument('--output_dir', default="./outputs",
+                        type=str, help='output directory')
     parser.add_argument('--n_epochs', type=int,
                         default=10, help='number of epochs')
     args = parser.parse_args()
@@ -148,13 +82,17 @@ def main():
         dataset_test, batch_size=1, shuffle=False, num_workers=4,
         collate_fn=utils.collate_fn)
 
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    if torch.cuda.is_available():
+        device = torch.device('cuda')
+    else:
+        torch.device('cpu')
 
     # our dataset has two classes only - background and person
-    num_classes = 2
+    num_classes = NUM_CLASSES
 
     # get the model using our helper function
     model = get_instance_segmentation_model(num_classes)
+
     # move model to the right device
     model.to(device)
 
@@ -169,16 +107,19 @@ def main():
                                                    step_size=3,
                                                    gamma=0.1)
 
-
     for epoch in range(args.n_epochs):
         # train for one epoch, printing every 10 iterations
-        train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
+        train_one_epoch(
+            model, optimizer, data_loader, device, epoch, print_freq=10)
         # update the learning rate
         lr_scheduler.step()
         # evaluate on the test dataset
         evaluate(model, data_loader_test, device=device)
 
-    torch.save(model, os.path.join(args.output_dir, 'model.pt'))
+    # Saving the state dict is recommended method, per
+    # https://pytorch.org/tutorials/beginner/saving_loading_models.html
+    torch.save(model.state_dict(), os.path.join(args.output_dir, 'model.pt'))
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()
