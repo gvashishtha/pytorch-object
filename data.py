@@ -2,6 +2,7 @@ import numpy as np
 import os
 import torch.utils.data
 
+from azureml.core import Run
 from PIL import Image
 
 
@@ -12,19 +13,22 @@ class PennFudanDataset(torch.utils.data.Dataset):
         
         # load all image files, sorting them to ensure that they are aligned
         self.target_dir = './PennFudan'
+        self.img_dir = 'PNGImages'
+        self.mask_dir = 'PedMasks'
         os.makedirs(self.target_dir, exist_ok=True)
         
-        self.dataset.download(self.target_dir)
+        self.dataset.download(self.target_dir, overwrite=True)
         self.imgs = list(sorted(os.listdir(
-            os.path.join(self.target_dir, "PNGImages"))))
+            os.path.join(self.target_dir, self.img_dir))))
         self.masks = list(sorted(os.listdir(
-            os.path.join(self.target_dir, "PedMasks"))))
+            os.path.join(self.target_dir, self.mask_dir))))
+
+        print(f'imgs is {self.imgs} masks {self.masks}')
 
     def __getitem__(self, idx):
         # load images ad masks
-        img_path = os.path.join(self.target_dir, self.imgs[idx])
-
-        print('DEBUG: within getitem, img_path is {img_path}')
+        img_path = os.path.join(self.target_dir, self.img_dir, self.imgs[idx])
+        mask_path = os.path.join(self.target_dir, self.mask_dir, self.masks[idx])
 
         img = Image.open(img_path).convert("RGB")
         # note that we haven't converted the mask to RGB,
