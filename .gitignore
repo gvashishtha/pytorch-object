@@ -2,14 +2,10 @@
 config.json
 pytorch-peds
 PennFudanPed
-coco_eval.py
-coco_utils.py
-engine.py
 test.zip
-transforms.py
-utils.py
 vision/
 cocoapi/
+username-pass.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
