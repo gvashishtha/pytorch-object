@@ -30,14 +30,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_name', type=str, default="penn_ds",
                         help='name of dataset for training and test')
-    parser.add_argument('--model_name', type=str, default="pytorch-peds",
+    parser.add_argument('--model_name', type=str, default="pytorch-peds.pt",
                         help='name with which to register your model')
     parser.add_argument('--output_dir', default="local-outputs",
                         type=str, help='output directory')
-    parser.add_argument('--model_path', type=str, default="model.pt",
-                        help='filename with which to register your model')
     parser.add_argument('--n_epochs', type=int,
                         default=10, help='number of epochs')
+    parser.add_argument('--ds_path', type=str,
+                        default='', help='folder path on datastore')
     args = parser.parse_args()
     dataset_name = args.dataset_name
     run = Run.get_context()
@@ -50,8 +50,8 @@ def main():
     penn_ds = Dataset.get_by_name(workspace=ws, name=dataset_name)
 
     # use our dataset and defined transformations
-    dataset = PennFudanDataset(penn_ds, get_transform(train=True))
-    dataset_test = PennFudanDataset(penn_ds, get_transform(train=False))
+    dataset = PennFudanDataset(dataset=penn_ds, transform=get_transform(train=True), ds_path=args.ds_path)
+    dataset_test = PennFudanDataset(dataset=penn_ds, transform=get_transform(train=False), ds_path=args.ds_path)
 
     # split the dataset in train and test set
     torch.manual_seed(1)
@@ -106,14 +106,7 @@ def main():
 
     # Saving the state dict is recommended method, per
     # https://pytorch.org/tutorials/beginner/saving_loading_models.html
-    torch.save(model.state_dict(), os.path.join(args.output_dir, args.model_path))
-    run.upload_file(
-        name=args.model_name,
-        path_or_stream=os.path.join(args.output_dir, args.model_path))
-    model = run.register_model(
-        model_name=args.model_name,
-        model_path=args.model_path)  # only the model file
-    print(model.name, model.id, model.version, sep='\t')
+    torch.save(model.state_dict(), os.path.join(args.output_dir, args.model_name))
 
 
 if __name__ == '__main__':

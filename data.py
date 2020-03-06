@@ -7,12 +7,12 @@ from PIL import Image
 
 
 class PennFudanDataset(torch.utils.data.Dataset):
-    def __init__(self, dataset, transforms=None):
+    def __init__(self, dataset, ds_path, transforms=None):
         self.dataset = dataset
         self.transforms = transforms
         
         # load all image files, sorting them to ensure that they are aligned
-        self.target_dir = './PennFudan'
+        self.target_dir = os.path.join('.', ds_path)
         self.img_dir =  os.path.join(self.target_dir, 'PNGImages')
         self.mask_dir = os.path.join(self.target_dir, 'PedMasks')
         os.makedirs(self.target_dir, exist_ok=True)
