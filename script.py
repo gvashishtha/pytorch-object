@@ -32,14 +32,19 @@ def main():
                         help='name of dataset for training and test')
     parser.add_argument('--model_name', type=str, default="pytorch-peds",
                         help='name with which to register your model')
-    parser.add_argument('--output_dir', default="outputs",
+    parser.add_argument('--output_dir', default="local-outputs",
                         type=str, help='output directory')
+    parser.add_argument('--model_path', type=str, default="model.pt",
+                        help='filename with which to register your model')
     parser.add_argument('--n_epochs', type=int,
                         default=10, help='number of epochs')
     args = parser.parse_args()
     dataset_name = args.dataset_name
     run = Run.get_context()
     ws = run.experiment.workspace
+
+    # In case user inputs a nested output directory
+    os.makedirs(name=args.output_dir, exist_ok=True)
 
     # Get a dataset by name
     penn_ds = Dataset.get_by_name(workspace=ws, name=dataset_name)
@@ -101,10 +106,13 @@ def main():
 
     # Saving the state dict is recommended method, per
     # https://pytorch.org/tutorials/beginner/saving_loading_models.html
-    torch.save(model.state_dict(), os.path.join(args.output_dir, 'model.pt'))
+    torch.save(model.state_dict(), os.path.join(args.output_dir, args.model_path))
+    run.upload_file(
+        name=args.model_name,
+        path_or_stream=os.path.join(args.output_dir, args.model_path))
     model = run.register_model(
-        model_name='pytorch-peds',
-        model_path=os.path.join(args.output_dir, 'model.pt'))
+        model_name=args.model_name,
+        model_path=args.model_path)  # only the model file
     print(model.name, model.id, model.version, sep='\t')
 
 
