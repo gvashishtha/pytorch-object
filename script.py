@@ -30,7 +30,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_name', type=str, default="penn_ds",
                         help='name of dataset for training and test')
-    parser.add_argument('--output_dir', default="./outputs",
+    parser.add_argument('--model_name', type=str, default="pytorch-peds",
+                        help='name with which to register your model')
+    parser.add_argument('--output_dir', default="outputs",
                         type=str, help='output directory')
     parser.add_argument('--n_epochs', type=int,
                         default=10, help='number of epochs')
@@ -100,6 +102,10 @@ def main():
     # Saving the state dict is recommended method, per
     # https://pytorch.org/tutorials/beginner/saving_loading_models.html
     torch.save(model.state_dict(), os.path.join(args.output_dir, 'model.pt'))
+    model = run.register_model(
+        model_name='pytorch-peds',
+        model_path=os.path.join(args.output_dir, 'model.pt'))
+    print(model.name, model.id, model.version, sep='\t')
 
 
 if __name__ == '__main__':
