@@ -3,15 +3,24 @@ import os
 import torch
 import torchvision
 import transforms as T
+import urllib.request
 import utils
 
 from azureml.core import Dataset, Run
 from data import PennFudanDataset
 from engine import train_one_epoch, evaluate
 from model import get_instance_segmentation_model
+from zipfile import ZipFile
 
 NUM_CLASSES = 2
 
+
+def download_data():
+    data_file = 'PennFudanPed.zip'
+    ds_path = 'PennFudanPed'
+    urllib.request.urlretrieve('https://www.cis.upenn.edu/~jshi/ped_html/PennFudanPed.zip', data_file)
+    zip = ZipFile(file=data_file)
+    zip.extractall(path=ds_path)
 
 def get_transform(train):
     transforms = []
@@ -50,8 +59,8 @@ def main():
     penn_ds = Dataset.get_by_name(workspace=ws, name=dataset_name)
 
     # use our dataset and defined transformations
-    dataset = PennFudanDataset(dataset=penn_ds, transform=get_transform(train=True), ds_path=args.ds_path)
-    dataset_test = PennFudanDataset(dataset=penn_ds, transform=get_transform(train=False), ds_path=args.ds_path)
+    dataset = PennFudanDataset(dataset=penn_ds, transform=get_transform(train=True))
+    dataset_test = PennFudanDataset(dataset=penn_ds, transform=get_transform(train=False))
 
     # split the dataset in train and test set
     torch.manual_seed(1)
