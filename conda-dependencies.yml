@@ -1,8 +1,0 @@
-name: gopalenv
-channels:
-  - conda-forge
-  - pytorch
-dependencies:
-  - torchvision>=0.5.0
-  - pip:
-    - django-crispy-forms==1.6.1

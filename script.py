@@ -17,10 +17,11 @@ NUM_CLASSES = 2
 
 def download_data():
     data_file = 'PennFudanPed.zip'
-    ds_path = 'PennFudanPed'
+    ds_path = 'PennFudanPed/'
     urllib.request.urlretrieve('https://www.cis.upenn.edu/~jshi/ped_html/PennFudanPed.zip', data_file)
     zip = ZipFile(file=data_file)
     zip.extractall(path=ds_path)
+    return os.path.join(ds_path, zip.namelist()[0])
 
 def get_transform(train):
     transforms = []
@@ -37,18 +38,13 @@ def main():
     print("Torch version:", torch.__version__)
     # get command-line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset_name', type=str, default="penn_ds",
-                        help='name of dataset for training and test')
     parser.add_argument('--model_name', type=str, default="pytorch-peds.pt",
                         help='name with which to register your model')
     parser.add_argument('--output_dir', default="local-outputs",
                         type=str, help='output directory')
     parser.add_argument('--n_epochs', type=int,
                         default=10, help='number of epochs')
-    parser.add_argument('--ds_path', type=str,
-                        default='', help='folder path on datastore')
     args = parser.parse_args()
-    dataset_name = args.dataset_name
     run = Run.get_context()
     ws = run.experiment.workspace
 
@@ -56,11 +52,11 @@ def main():
     os.makedirs(name=args.output_dir, exist_ok=True)
 
     # Get a dataset by name
-    penn_ds = Dataset.get_by_name(workspace=ws, name=dataset_name)
+    root_dir = download_data()
 
     # use our dataset and defined transformations
-    dataset = PennFudanDataset(dataset=penn_ds, transform=get_transform(train=True))
-    dataset_test = PennFudanDataset(dataset=penn_ds, transform=get_transform(train=False))
+    dataset = PennFudanDataset(root=root_dir, transforms=get_transform(train=True))
+    dataset_test = PennFudanDataset(root=root_dir, transforms=get_transform(train=False))
 
     # split the dataset in train and test set
     torch.manual_seed(1)
